@@ -103,18 +103,18 @@ friend
 // восполняющим невозможность в C++ определять виртуальные поля. Проблема связана
 // с тем, что поля _className и _count статические, но индивидуальные для каждого
 // класса (что ясно), однако хотелось бы их адекватно полиморфно менять.
-#define CLOSE_CLASS(ClassName)                     \
-    public:                                        \
-        virtual const char* className()            \
-        { return _className; }                     \
-                                                   \
-        virtual int &count()                       \
-        { return _count; }                         \
-                                                   \
-    private:                                       \
-        static const char* _className;             \
-        static int _count;                         \
-    };                                             \
+#define CLOSE_CLASS(ClassName)                       \
+    public:                                          \
+        virtual const char* className()              \
+        { return _className; }                       \
+                                                     \
+        virtual int &count()                         \
+        { return _count; }                           \
+                                                     \
+    private:                                         \
+        static const char* _className;               \
+        static int _count;                           \
+    };                                               \
     const char* ClassName::_className = #ClassName;  \
     int ClassName::_count = 0;
 CLOSE_CLASS(Base)
