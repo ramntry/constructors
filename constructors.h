@@ -30,7 +30,7 @@ string itos(int value)
 // из констукторов, оператора присваивания и деструктора класса Base
 bool supressBase = true;
 
-// Таблица удобный в использовании строковых констант
+// Таблица удобных в использовании строковых констант
 const char* sc = "[SCRATCH]";  // Используется для обозначения неинициализированной памяти
 const char* un = "[UNNAMED]";
 const char* dc = "default constructor";
