@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Копируем код constructors.cpp вплоть до макроса MAIN включительно
+cat constructors.cpp | sed -n '0, /MAIN/p' > constructors.tmp.cpp
+
+# Если скрипту передан ключ командной строки -b (Base), то добавим в main() присваивание 
+# глобальной переменной supressBase значения, отключающего подавление выдачми сообщений
+# конструкторами класса Base
+if [ "$1" = "-b" ]
+then
+    echo "    supressBase = false;" >> constructors.tmp.cpp
+fi
+
+# Пронумеруем все строки файла constructors.cpp, а также
+# во всем блоке кода между MAIN и ENDMAIN, не включая MAIN и ENDMAIN
+# заменим номер строки макросом PRINT_LINE_NUMBER с аргументом, равным номеру строки
+# (см. constructors.h)
+cat -n constructors.cpp \
+                | sed -n '/MAIN/, /ENDMAIN/p' \
+                | sed '/MAIN/d' \
+                | sed '/ENDMAIN/d' \
+                | sed -r 's/([0-9]+)/PRINT_LINE_NUMBER(\1)/' >> constructors.tmp.cpp
+
+# завершим блок MAIN нужным макросом:
+echo "\nENDMAIN" >> constructors.tmp.cpp
+
+# откомпилируем полученный код и выйдем из скрипта в случае ошибок компиляции
+g++ constructors.tmp.cpp -o constructors.tmp.bin || exit
+
+# выведем на экран блок MAIN, осуществим подстановки, аналогичные определениям
+# макросов MAIN и ENDMAIN в constructors.h
+cat -n constructors.cpp \
+                | sed -n '/MAIN/, /ENDMAIN/p' \
+                | sed -r 's/ENDMAIN/}/' \
+                | sed -r 's/MAIN/int main(int argc, char **argv) {/' 
+echo "-----------------------------"
+
+# запустим полученный бинарный файл, пропусти его вывод через несколько фильтров:
+# - удалим строки, состоящие только из пробельных символов     
+# - удалим строки, пустые в файле constructors.cpp (но пронумерованные)
+# - непронумерованные строки, соответствующие строкам кода constructors.cpp,
+#   осуществляющим многострочный вывод в процессе своего выполнения, выровняем
+#   пробелами до ширины пронумерованных                                       
+./constructors.tmp.bin \
+                | sed -r '/^\s*$/d' \
+                | sed -r '/\s*[0-9]+  $/d' \
+                | sed -r '/^\s+[0-9]+/!s/^/        /'  
+                                                       
+# удалим все временные файлы
+rm constructors.tmp.*
+
