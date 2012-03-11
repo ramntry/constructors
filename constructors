@@ -25,7 +25,7 @@ cat -n constructors.cpp \
                 | sed -r 's/([0-9]+)/PRINT_LINE_NUMBER(\1)/' >> constructors.tmp.cpp
 
 # завершим блок MAIN нужным макросом:
-echo "\nENDMAIN" >> constructors.tmp.cpp
+echo "ENDMAIN" >> constructors.tmp.cpp
 
 # откомпилируем полученный код и выйдем из скрипта в случае ошибок компиляции
 g++ constructors.tmp.cpp -o constructors.tmp.bin || exit
