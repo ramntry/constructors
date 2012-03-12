@@ -111,6 +111,9 @@ friend
         virtual int &count()                         \
         { return _count; }                           \
                                                      \
+        static void resetCount()                     \
+        { _count = 0; }                              \
+                                                     \
     private:                                         \
         static const char* _className;               \
         static int _count;                           \

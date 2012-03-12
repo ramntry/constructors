@@ -1,7 +1,26 @@
 #!/bin/sh
 
-# Копируем код constructors.cpp вплоть до макроса MAIN включительно
-cat constructors.cpp | sed -n '0, /MAIN/p' > constructors.tmp.cpp
+CPP_NAME="constructors.cpp"
+ClEAR_ALL=true
+SHOW_BASE=false
+
+# Разбор параметров командной строки.
+# Для указания альтернативного расположения файла constructors.cpp
+# используйте ключ -f с параметром-именем файла. Например так:
+#
+#     ./constructors -f examples/virtual_destructors.cpp
+#
+while getopts "bnf:" Option
+do
+    case $Option in
+        b ) SHOW_BASE=true ;;
+        n ) CLEAR_ALL=false ;;
+        f ) CPP_NAME=$OPTARG ;;
+    esac
+done
+
+# Копируем код $CPP_NAME вплоть до макроса MAIN включительно
+cat $CPP_NAME | sed -n '0, /MAIN/p' > constructors.tmp.cpp
 
 # Если скрипту передан ключ командной строки -b (Base), то добавим в main() присваивание 
 # глобальной переменной supressBase значения, отключающего подавление выдачи сообщений
@@ -9,16 +28,16 @@ cat constructors.cpp | sed -n '0, /MAIN/p' > constructors.tmp.cpp
 # (Обратите внимание на то, что в случае добавления этой строки в файл constructors.tmp.cpp
 # сообщения компилятора об ошибках в main() будут адресоваться со сдвигом на одну строку
 # относительно оригинального файла)
-if [ "$1" = "-b" ]
+if $SHOW_BASE
 then
     echo "    supressBase = false;" >> constructors.tmp.cpp
 fi
 
-# Пронумеруем все строки файла constructors.cpp, а также
+# Пронумеруем все строки файла $CPP_NAME, а также
 # во всем блоке кода между MAIN и ENDMAIN, не включая MAIN и ENDMAIN
 # заменим номер строки макросом PRINT_LINE_NUMBER с аргументом, равным номеру строки
 # (см. constructors.h)
-cat -n constructors.cpp \
+cat -n $CPP_NAME \
                 | sed -n '/MAIN/, /ENDMAIN/p' \
                 | sed '/MAIN/d' \
                 | sed '/ENDMAIN/d' \
@@ -32,7 +51,7 @@ g++ constructors.tmp.cpp -o constructors.tmp.bin || exit
 
 # выведем на экран блок MAIN, осуществим подстановки, аналогичные определениям
 # макросов MAIN и ENDMAIN в constructors.h
-cat -n constructors.cpp \
+cat -n $CPP_NAME \
                 | sed -n '/MAIN/, /ENDMAIN/p' \
                 | sed -r 's/ENDMAIN/}/' \
                 | sed -r 's/MAIN/int main(int argc, char **argv) {/' 
@@ -40,8 +59,8 @@ echo "-----------------------------"
 
 # запустим полученный бинарный файл, пропусти его вывод через несколько фильтров:
 # - удалим строки, состоящие только из пробельных символов     
-# - удалим строки, пустые в файле constructors.cpp (но пронумерованные)
-# - непронумерованные строки, соответствующие строкам кода constructors.cpp,
+# - удалим строки, пустые в файле $CPP_NAME (но пронумерованные)
+# - непронумерованные строки, соответствующие строкам кода $CPP_NAME,
 #   осуществляющим многострочный вывод в процессе своего выполнения, выровняем
 #   пробелами до ширины пронумерованных                                       
 ./constructors.tmp.bin \
@@ -49,6 +68,9 @@ echo "-----------------------------"
                 | sed -r '/\s*[0-9]+  $/d' \
                 | sed -r '/^\s+[0-9]+/!s/^/        /'  
                                                        
-# удалим все временные файлы
-rm constructors.tmp.*
+# удалим все временные файлы, если не указан ключ -n (отменить удаление временных файлов)
+if $CLEAR_ALL
+then
+    rm constructors.tmp.*
+fi
 
